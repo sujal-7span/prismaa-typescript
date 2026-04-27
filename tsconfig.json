@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "rootDir": ".",
+    "outDir": "./dist"
+  },
+  "include": ["src", "prisma.config.ts"]
+}
