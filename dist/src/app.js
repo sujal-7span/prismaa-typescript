@@ -1,12 +1,6 @@
 import express from "express";
 import userRoutes from "./modules/auth/auth.route.js";
-import brandRoutes from "./modules/brand/brand.route.js";
-
 const app = express();
-
 app.use(express.json());
-
 app.use("/api/users", userRoutes);
-app.use('/api/brands', brandRoutes)
-
 export default app;
