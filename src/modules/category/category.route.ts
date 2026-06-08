@@ -1,13 +1,13 @@
 import { Router } from "express";
 import {
-    createBrand,
-    getAllBrands,
-    getBrandById,
-    updateBrand,
-    deleteBrand
-} from "./brand.controller.js";
+    createCategory,
+    getAllCategories,
+    getCategoryById,
+    updateCategory,
+    deleteCategory
+} from "./category.controller.js";
 import { validate } from "../../middlewears/validate.middlewear.js";
-import { createBrandSchema, updateBrandSchema } from "./brand.validation.js";
+import { createCategorySchema, updateCategorySchema } from "./category.validation.js";
 import { authMiddlewear } from "../../middlewears/auth.middlewear.js";
 import { authorize } from "../../middlewears/rbac.middlewear.js";
 
@@ -18,26 +18,25 @@ router.use(authMiddlewear);
 router.route("/")
     .post(
         authorize("ADMIN", "MODERATOR"),
-        validate(createBrandSchema),
-        createBrand
+        validate(createCategorySchema),
+        createCategory
     )
     .get(
-        getAllBrands
+        getAllCategories
     );
 
 router.route("/:id")
     .get(
-        getBrandById
+        getCategoryById
     )
     .patch(
         authorize("ADMIN", "MODERATOR"),
-        validate(updateBrandSchema),
-        updateBrand
+        validate(updateCategorySchema),
+        updateCategory
     )
     .delete(
         authorize("ADMIN", "MODERATOR"),
-        deleteBrand
+        deleteCategory
     );
-
 
 export default router;

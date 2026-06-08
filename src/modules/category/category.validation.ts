@@ -1,12 +1,11 @@
 import Joi from "joi";
 
-export const createBrandSchema = Joi.object({
+export const createCategorySchema = Joi.object({
     name: Joi.string().required(),
     description: Joi.string().optional(),
-    categoryIds: Joi.array().items(Joi.string().uuid()).min(1)
 });
 
-export const updateBrandSchema = Joi.object({
+export const updateCategorySchema = Joi.object({
     name: Joi.string().optional(),
     description: Joi.string().optional(),
 });

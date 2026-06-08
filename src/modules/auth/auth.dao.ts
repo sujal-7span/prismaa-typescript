@@ -1,10 +1,15 @@
 import { prisma } from '../../lib/prisma.js';
+import { findUserByEmailOrUsernameType, registerUserType, updateUserType } from './auth.types.js';
 
 export const findAllUsersDao = () => {
     return prisma.user.findMany();
 };
 
-export const findUserByEmailOrUsername = (email: string, username: string) => {
+export const findUserByEmailOrUsername = ({
+    email,
+    username
+}: findUserByEmailOrUsernameType
+) => {
     return prisma.user.findFirst({
         where: {
             OR: [{ email }, { username }]
@@ -18,9 +23,20 @@ export const findUserById = (id: string) => {
     })
 }
 
-export const createUserDao = (data: { username: string; email: string; password: string, role: "USER" | "MODERATOR" | "ADMIN" }) => {
+export const createUserDao = ({
+    username,
+    email,
+    password,
+    role
+}: registerUserType
+) => {
     return prisma.user.create({
-        data
+        data: {
+            username,
+            email,
+            password,
+            role
+        }
     })
 }
 
@@ -37,15 +53,19 @@ export const updateRefreshToken = (userId: string, refreshToken: string) => {
     })
 };
 
-export const updateUserDao = (userId: string, data: {
-    email?: string,
-    username?: string,
-    password?: string
-}) => {
+export const updateUserDao = ({
+    userId,
+    email,
+    username,
+    password
+}: updateUserType
+) => {
     return prisma.user.update({
         where: { id: userId },
         data: {
-            ...data
+            email,
+            username,
+            password
         }
     });
 };

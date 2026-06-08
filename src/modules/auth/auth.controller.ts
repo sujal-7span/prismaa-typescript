@@ -1,119 +1,98 @@
 import { Request, Response } from 'express'
-import { userService } from './auth.service.js'
+import { registerUserService, getAllUsersService, getUserProfileService, loginUserService, updateUserService, logoutUserService, deleteUserService } from './auth.service.js'
+import { errorResponse, successResponse } from '../../utils/response.js'
 
 export const registerUser = async (req: Request, res: Response) => {
     try {
-        const user = await userService.registerUser(req.body)
-        console.log(user)
-
-        return res
-            .status(201)
-            .json({ message: 'User registered successfully', data: user })
-
+        const { username, email, password, role } = req.body
+        await registerUserService({ username, email, password, role })
+        return successResponse(res, 201, 'User registered successfully')
     } catch (error) {
-        if (error instanceof Error) {
-            return res
-                .status(409)
-                .json({ message: error.message })
-        }
-        return res.status(500).json({ message: 'Internal server error' })
+        return errorResponse(res, error, 409)
     }
 
 }
 
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
-        const users = await userService.getAllUsers();
-
-        return res
-            .status(200)
-            .json({ message: 'Users retrieved successfully', data: users });
-
+        const users = await getAllUsersService();
+        return successResponse(res, 200, 'Users retrieved successfully', users);
     } catch (error) {
-        if (error instanceof Error) {
-            return res.status(400)
-                .json({ message: error.message })
-        }
-        return res.status(500).json({ message: 'Internal server error' })
+        return errorResponse(res, error, 400)
     }
 };
 
 export const getUserProfile = async (req: Request, res: Response) => {
     try {
         const userId = req.params.id as string;
-        const user = await userService.getUserProfile(userId);
-
-        return res
-            .status(200)
-            .json({ message: 'User profile retrieved successfully', data: user });
-
+        const user = await getUserProfileService(userId);
+        return successResponse(res, 200, 'User profile retrieved successfully', user);
     } catch (error) {
-        if (error instanceof Error) {
-            return res.status(400).json({ message: error.message })
-        }
-        return res.status(500).json({ message: 'Internal server error' })
+        return errorResponse(res, error, 400)
     }
 }
 
 export const loginUser = async (req: Request, res: Response) => {
     try {
-        const loginUser = await userService.loginUser(req.body);
-
-        return res
-            .status(200)
-            .json({ message: 'User logged in successfully', data: loginUser });
-
+        const { email, password } = req.body;
+        const loginUser = await loginUserService({ email, password });
+        return successResponse(res, 200, 'User logged in successfully', loginUser);
     } catch (error) {
-        if (error instanceof Error) {
-            return res
-                .status(400)
-                .json({ message: error.message })
-        }
-        return res.status(500).json({ message: 'Internal server error' })
+        return errorResponse(res, error, 400)
     }
 };
 
 export const updateUser = async (req: Request, res: Response) => {
     try {
         const userId = req.params.id as string;
-        await userService.updateUser(req.user!, userId, req.body);
+        const { email, username, password } = req.body
+        const authUser = req.user!
 
-        return res.status(200).json({ message: 'User updated successfully' });
-    } catch (error) {
-        if (error instanceof Error) {
-            return res
-                .status(400)
-                .json({ message: error.message })
+        if (authUser.id !== userId && authUser.role !== "ADMIN") {
+            throw new Error('Unauthorized')
         }
-        return res.status(500).json({ message: 'Internal server error' })
+
+        await updateUserService({ userId, email, username, password });
+        return successResponse(res, 200, 'User updated successfully')
+    } catch (error) {
+        return errorResponse(res, error, 400)
     }
 };
 
 export const logoutUser = async (req: Request, res: Response) => {
     try {
         const userId = req.user!.id;
-        await userService.logoutUser(userId, req.body);
-        return res.status(200).json({ message: 'User logged out successfully' });
+        const { refreshToken } = req.body
+        await logoutUserService({ userId, refreshToken });
+        return successResponse(res, 200, 'User logged out successfully')
     } catch (error) {
-        if (error instanceof Error) {
-            return res
-                .status(400)
-                .json({ message: error.message })
-        }
-        return res.status(500).json({ message: 'Internal server error' })
+        return errorResponse(res, error, 400)
     }
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
     try {
         const userId = req.params.id as string;
+        const authUser = req.user!
 
-        await userService.deleteUser(req.user!, userId);
-        return res.status(200).json({ message: 'User deleted successfully' });
-    } catch (error) {
-        if (error instanceof Error) {
-            return res.status(400).json({ message: error.message })
+        if (authUser.id !== userId && authUser.role !== "ADMIN") {
+            throw new Error('Unauthorized');
         }
-        return res.status(500).json({ message: 'Internal server error' })
+
+        await deleteUserService(userId);
+        return successResponse(res, 200, 'User deleted successfully')
+    } catch (error) {
+        return errorResponse(res, error, 400)
     }
+}
+
+export const myProfile = async (req: Request, res: Response) => {
+    try {
+        const authuser = req.user!
+        const me = await getUserProfileService(authuser.id)
+        return successResponse(res, 200, "User retrieved successfully", me)
+    } catch (error) {
+        return errorResponse(res, error, 400)
+    }
+
 }

@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import { generateTokens } from "../../utils/tokens.js";
-import type { AuthUser } from "../../utils/authuser.js";
 import {
     createUserDao,
     findUserByEmail,
@@ -13,17 +12,16 @@ import {
     findAllUsersDao
 
 } from './auth.dao.js';
+import { loginUserType, logoutUserType, registerUserType, updateUserType } from './auth.types.js';
 
-const registerUser = async (data: {
-    username: string
-    email: string
-    password: string
-    role?: "USER" | "MODERATOR" | "ADMIN"
-}) => {
-    ``
-    const { username, email, password, role = "USER" } = data;
-
-    const existingUser = await findUserByEmailOrUsername(email, username);
+export const registerUserService = async ({
+    username,
+    email,
+    password,
+    role
+}: registerUserType
+) => {
+    const existingUser = await findUserByEmailOrUsername({ email, username });
 
     if (existingUser) {
         throw new Error('User already exists')
@@ -45,12 +43,10 @@ const registerUser = async (data: {
     });
 
     const { password: _, ...safeUser } = newUser
-
     return safeUser;
-
 };
 
-const getAllUsers = async () => {
+export const getAllUsersService = async () => {
 
     const users = await findAllUsersDao();
 
@@ -60,21 +56,18 @@ const getAllUsers = async () => {
     });
 };
 
-const getUserProfile = async (userId: string) => {
+export const getUserProfileService = async (userId: string) => {
+
     const user = await findUserById(userId);
-
     const { password, refreshToken, ...safeUser } = user!;
-
     return safeUser;
 }
 
-const loginUser = async (data: {
-    email: string,
-    password: string
-
-}) => {
-    const { email, password } = data;
-
+export const loginUserService = async ({
+    email,
+    password
+}: loginUserType
+) => {
     const existingUser = await findUserByEmail(email);
 
     if (!existingUser) {
@@ -91,68 +84,51 @@ const loginUser = async (data: {
 
     await updateRefreshToken(existingUser.id, refreshToken);
 
-    const { password: _, refreshToken: __, ...safeUser } = existingUser
+    const { password: _ } = existingUser
 
     return {
-        user: safeUser,
         accessToken,
+        refreshToken
     };
 
 }
 
-const updateUser = async (
-    currentUser: AuthUser,
-    userId: string,
-    data: {
-        email?: string,
-        username?: string,
-        password?: string
-    }) => {
-
-    if (currentUser.id !== userId && currentUser.role !== "ADMIN") {
-        throw new Error('Unauthorized');
-    }
-
-    const { password } = data;
-
+export const updateUserService = async ({
+    userId,
+    email,
+    username,
+    password
+}: updateUserType
+) => {
     if (password) {
         const hashedPassword = await bcrypt.hash(password, 10);
-        data.password = hashedPassword;
+        password = hashedPassword;
     }
 
-    const updatedUser = await updateUserDao(userId, data);
+    const updatedUser = await updateUserDao({ userId, email, username, password });
 
     const { password: _, ...safeUser } = updatedUser
 
     return safeUser;
 }
 
-const logoutUser = async (
-    userId: string,
-    data: {
-        refreshToken: string
-    }
+export const logoutUserService = async ({
+    userId,
+    refreshToken
+}: logoutUserType
 ) => {
+
     const user = await findUserById(userId);
     if (!user || !user.refreshToken) {
         throw new Error('User not logged in');
     }
-    if (user.refreshToken !== data.refreshToken) {
+    if (user.refreshToken !== refreshToken) {
         throw new Error('Invalid refresh token');
     }
 
     await removeRefreshTokenDao(userId);
 }
 
-const deleteUser = async (
-    currentUser: AuthUser,
-    userId: string
-) => {
-    if (currentUser.id !== userId && currentUser.role !== "ADMIN") {
-        throw new Error('Unauthorized');
-    }
-
+export const deleteUserService = async (userId: string) => {
     await deleteUserDao(userId);
 }
-
-export const userService = { registerUser, getAllUsers, getUserProfile, loginUser, updateUser, logoutUser, deleteUser }

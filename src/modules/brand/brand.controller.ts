@@ -1,72 +1,55 @@
 import { Request, Response } from "express";
-import { brandService } from "./brand.service.js";
+import { createBrandService, getAllBrandsService, getBrandByIdService, updateBrandService, deleteBrandService } from "./brand.service.js";
+import { errorResponse, successResponse } from "../../utils/response.js";
 
 export const createBrand = async (req: Request, res: Response) => {
     try {
-        const brand = await brandService.createBrand(req.user!, req.body);
-
-        return res
-            .status(201)
-            .json({ message: "Brand created successfully", data: brand });
-
+        const { name, description, categoryIds } = req.body
+        await createBrandService(req.user!, { name, description, categoryIds });
+        return successResponse(res, 201, "Brand created successfully")
     } catch (error) {
-        if (error instanceof Error) {
-            return res.status(500).json({ message: error.message })
-        }
-        return res.status(500).json({ message: "An unexpected error occurred" })
+        return errorResponse(res, error, 409)
     }
 }
 
 export const getAllBrands = async (req: Request, res: Response) => {
     try {
-        const brands = await brandService.getAllBrands();
-        return res.status(200).json({ message: "Brands retrieved successfully", data: brands });
-
+        const brands = await getAllBrandsService();
+        return successResponse(res, 200, "Brands retrieved successfully", brands);
     } catch (error) {
-        if (error instanceof Error) {
-            return res.status(500).json({ message: error.message })
-        }
-        return res.status(500).json({ message: "An unexpected error occurred" })
+        return errorResponse(res, error, 400)
     }
 }
 
 export const getBrandById = async (req: Request, res: Response) => {
     try {
         const brandId = req.params.id as string;
-        const brand = await brandService.getBrandById(brandId);
-        return res.status(200).json({ message: "Brand retrieved successfully", data: brand });
-
+        const brand = await getBrandByIdService(brandId);
+        return successResponse(res, 200, "Brand retrieved successfully", brand);
     } catch (error) {
-        if (error instanceof Error) {
-            return res.status(500).json({ message: error.message })
-        }
-        return res.status(500).json({ message: "An unexpected error occurred" })
+        return errorResponse(res, error, 400)
     }
 }
 
 export const updateBrand = async (req: Request, res: Response) => {
     try {
+        const authUser = req.user!
         const brandId = req.params.id as string;
-        const updatedBrand = await brandService.updateBrand(brandId, req.body);
-        return res.status(200).json({ message: "Brand updated successfully", data: updatedBrand });
-
+        const { name, description } = req.body
+        await updateBrandService(authUser, { brandId, name, description });
+        return successResponse(res, 200, "Brand updated successfully");
     } catch (error) {
-        if (error instanceof Error) {
-            return res.status(500).json({ message: error.message })
-        }
-        return res.status(500).json({ message: "An unexpected error occurred" })
+        return errorResponse(res, error, 400)
     }
 }
 
 export const deleteBrand = async (req: Request, res: Response) => {
     try {
         const brandId = req.params.id as string;
-        await brandService.deleteBrand(req.user!, brandId);
-        return res.status(200).json({ message: "Brand deleted successfully" });
+        await deleteBrandService(req.user!, brandId);
+        return successResponse(res, 200, "Brand deleted successfully");
     } catch (error) {
-        if (error instanceof Error) {
-            return res.status(500).json({ message: error.message })
-        }
-        return res.status(500).json({ message: "An unexpected error occurred" })
+        return errorResponse(res, error, 400)
+
     }
 }
